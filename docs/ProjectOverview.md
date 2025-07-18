@@ -1,33 +1,60 @@
-Project Overview
+# Project Overview
 
-Title: Metallic Alloy Microstructure Analysis Using Deep Learning
+This project demonstrates a deep learning-based workflow for analysing the microstructures of Ti-6Al-4V (Grade 5 titanium alloy), focusing on the automated assessment of grain size, volume fraction, and porosity. The aim is to replace time-intensive, manual techniques with a scalable, high-precision pipeline using modern computer vision tools.
 
-Introduction: Brief introduction to the project, its significance in material science, and the objectives of using deep learning for microstructure analysis.
+---
 
-Background: A short background on why analyzing metallic alloy microstructures is important and how deep learning, specifically YOLO, can be beneficial in this domain.
+## Methodology and Pipeline
 
-Installation Guide
-Requirements: List of hardware and software requirements, including GPU specifications (if necessary) and operating system.
-Dependencies: Detailed list of required libraries and tools (e.g., TensorFlow, NumPy, Jupyter Notebook) with installation instructions.
-Setup Instructions: Step-by-step guide for setting up the project environment, including cloning the repository, installing dependencies, and preparing the dataset.
+The full workflow consists of the following key stages:
 
-Usage
-Data Preparation: Instructions on how to prepare and format the data for training and evaluation.
-Training the Model: Explanation of how to use the training script, including any required command-line arguments or parameters.
-Model Evaluation: Guidelines on how to evaluate the trained model, interpret the results, and possibly visualize the outputs.
-Troubleshooting: Common issues users might face and their solutions.
+### 1. Data Sourcing and Preparation
+- A curated dataset of over 1,000 microstructure images was assembled from academic sources, research databases, and published studies.
+- Images included a range of grain morphologies and porosity levels across three microstructure types: equiaxed, lamellar, and martensitic.
+- Each image was standardised to a resolution of 640×640px and 32-bit depth.
+- Class balancing, resizing, and annotation (e.g. bounding boxes around grains and pores) were performed using Roboflow.
 
-Methodology
-Model Architecture: Detailed description of the YOLO model architecture used, including any customizations or optimizations.
-Training Process: Insights into the training process, such as data augmentation techniques, choice of loss functions, and hyperparameter tuning.
-Performance Metrics: Explanation of the metrics used to evaluate the model's performance.
+### 2. Microstructure Classification (CNN)
+- A convolutional neural network (CNN) was trained to categorise each image as equiaxed, lamellar, or martensitic.
+- This classification stage enabled conditional processing, where only equiaxed structures progressed to the grain detection pipeline.
+- The CNN model was trained on a balanced 80/20 train-test split using stochastic gradient descent.
 
-Contributing
-Guidelines for Contributors: How others can contribute to the project, including coding standards, pull request process, and code review policy.
-Contact Information: Contact details for users to reach out for more information or collaboration.
+### 3. Grain Detection and Quantification (YOLOv8n)
+- YOLOv8n was selected for its real-time object detection capabilities and anchor-free architecture.
+- The model was trained to detect individual alpha grains in equiaxed microstructures.
+- Post-processing included:
+  - Calculation of average grain size using bounding box statistics
+  - Volume fraction analysis by pixel-area ratio of detected grains to total image area
 
-License
-Project License: Information about the license under which the project is released (e.g., MIT, GPL).
+### 4. Porosity Analysis (OpenCV)
+- Custom image processing scripts were developed to analyse pores:
+  - Grayscale conversion, Gaussian blur, and median filtering
+  - Binary thresholding and inversion to segment pore regions
+  - Component labelling and shape classification (circular vs elliptical)
+  - Surface roughness mapped in 3D from brightness gradients
+- Outputs included pore count, eccentricity, area, and perimeter, with results expressed as a % of total image area.
 
-References
-Citations: Citations and references to papers, datasets, or other resources used in the project.
+### 5. Model Training and Evaluation
+- YOLOv8n was trained on 200 annotated images (80% train, 10% test, 10% validation).
+- Evaluation metrics included:
+  - **CNN classifier**: mAP = 86.9%, F1 = 85.7%
+  - **YOLOv8n grain detector**: mAP = 90.8%, F1 = 86.9%, Precision = 92.5%, Recall = 82.0%
+- Analysis of false positives and under-detected grains was conducted to adjust detection thresholds.
+
+### 6. Result Reporting and Visualisation
+- Output images show labelled grains and pores with class confidence levels
+- Quantitative summaries include:
+  - Grain count, average grain size, and volume fraction
+  - Pore classification (by shape), total area, and surface roughness
+- Results are exported for visual inspection and benchmarking
+
+---
+
+## Summary
+
+This project serves as a proof of concept for applying deep learning to automate microstructural analysis in materials science. By combining CNNs, YOLO-based detection, and traditional image processing, the pipeline enables faster, more consistent evaluation of alloy quality. While demonstrated on Ti-6Al-4V, the approach is generalisable to other materials with appropriate training data.
+
+---
+
+Developed by Ronan Banerji  
+Dissertation submitted to Swansea University, 2024
